@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用设计原则 — 沟通过程回顾</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #fafafa; color: #171717; line-height: 1.7; padding: 64px 24px; -webkit-font-smoothing: antialiased; }
+.container { max-width: 860px; margin: 0 auto; }
+h1 { font-size: 36px; font-weight: 700; margin-bottom: 48px; letter-spacing: -0.5px; color: #0a0a0a; }
+
+/* 原则卡片 */
+.principles-section { margin-bottom: 64px; }
+.principles-section h2 { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: #999; margin-bottom: 20px; }
+.principles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.principle-card { background: #fff; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; border: 1px solid #e5e5e5; position: relative; }
+.principle-card:hover { border-color: #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
+.principle-card .card-id { font-size: 10px; color: #999; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.5px; }
+.principle-card .card-name { font-size: 13px; font-weight: 600; color: #171717; line-height: 1.4; }
+.principle-card .card-priority { position: absolute; top: 12px; right: 12px; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.3px; }
+.card-priority.p0 { background: #fef2f2; color: #dc2626; }
+.card-priority.p1 { background: #fffbeb; color: #d97706; }
+.card-priority.p2 { background: #f0f9ff; color: #0284c7; }
+
+/* 弹窗 */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+.modal-overlay.active { display: flex; }
+.modal-content { background: #fff; border: 1px solid #e5e5e5; border-radius: 16px; max-width: 640px; width: 100%; max-height: 80vh; overflow: hidden; padding: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
+.modal-inner { overflow-y: auto; padding: 32px; flex: 1; }
+.modal-inner::-webkit-scrollbar { width: 4px; }
+.modal-inner::-webkit-scrollbar-track { background: transparent; }
+.modal-inner::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+.modal-inner::-webkit-scrollbar-thumb:hover { background: #bbb; }
+.modal-content h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #0a0a0a; }
+.modal-content .modal-oneliner { font-size: 14px; color: #999; margin-bottom: 24px; }
+.modal-content .modal-section { margin-bottom: 20px; }
+.modal-content .modal-section h4 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #999; margin-bottom: 8px; }
+.modal-content .modal-section p, .modal-content .modal-section li { font-size: 13px; color: #555; line-height: 1.8; }
+.modal-content .modal-section ul { padding-left: 16px; }
+.modal-content .modal-section li { margin-bottom: 4px; }
+.modal-close { position: sticky; top: 0; float: right; background: #f5f5f5; border: 1px solid #e5e5e5; width: 32px; height: 32px; border-radius: 8px; font-size: 16px; cursor: pointer; color: #999; z-index: 1; transition: all 0.15s; }
+.modal-close:hover { background: #eee; color: #333; }
+
+/* 时间线 */
+.section-title { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: #999; margin-bottom: 32px; }
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: 0; width: 1px; background: #e5e5e5; }
+.phase { margin-bottom: 48px; position: relative; }
+.phase-dot { position: absolute; left: -26px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ccc; border: none; }
+.phase-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #0a0a0a; }
+.phase-collab { font-size: 12px; color: #999; margin-bottom: 16px; line-height: 1.6; }
+.phase-content { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; }
+.phase-content p { margin-bottom: 16px; font-size: 13px; color: #555; line-height: 1.8; }
+.phase-content p:last-child { margin-bottom: 0; }
+.phase-content p strong { color: #171717; }
+.phase-content ul { margin-bottom: 16px; font-size: 13px; color: #555; line-height: 1.8; padding-left: 18px; }
+.phase-content ul:last-child { margin-bottom: 0; }
+.phase-content li { margin-bottom: 4px; color: #555; }
+.phase-content ul + p { margin-top: 20px; }
+.phase-content code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #333; }
+
+/* 高亮块 */
+.decision { background: #f0f7ff; border-left: 2px solid #3b82f6; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; color: #555; line-height: 1.8; }
+.decision strong { color: #2563eb; }
+.decision ul { padding-left: 16px; margin: 0; }
+.decision li { margin-bottom: 4px; color: #555; }
+.output { background: #f0fdf4; border-left: 2px solid #22c55e; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; color: #555; line-height: 1.8; }
+.output strong { color: #16a34a; }
+.insight { background: #fffbeb; border-left: 2px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; color: #555; line-height: 1.8; }
+.insight strong { color: #d97706; }
+
+/* Tags */
+.tag { display: inline-block; font-size: 11px; padding: 4px 10px; border-radius: 6px; margin-right: 6px; margin-bottom: 8px; font-weight: 500; }
+.tag-principle { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+.tag-method { background: #f5f5f5; color: #555; border: 1px solid #e5e5e5; }
+
+/* 底部产出物 */
+.summary-box { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 28px; margin-top: 48px; }
+.summary-box h2 { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: #888; margin-bottom: 16px; }
+.summary-box ul { list-style: none; padding: 0; }
+.summary-box li { padding: 10px 0; font-size: 13px; border-bottom: 1px solid #2a2a2a; color: #aaa; }
+.summary-box li:last-child { border-bottom: none; }
+.summary-box li::before { content: '→ '; color: #555; }
+.summary-box li code { background: #2a2a2a; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #eee; }
+
+@media (max-width: 600px) { .principles-grid { grid-template-columns: repeat(2, 1fr); } h1 { font-size: 28px; } }
+
+/* 附录 */
+.appendix { margin-top: 48px; }
+.appendix h2 { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: #999; margin-bottom: 20px; }
+.appendix-scroll { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; height: 480px; overflow-y: auto; padding: 28px; }
+.appendix-scroll::-webkit-scrollbar { width: 4px; }
+.appendix-scroll::-webkit-scrollbar-track { background: transparent; }
+.appendix-scroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+.appendix-scroll::-webkit-scrollbar-thumb:hover { background: #bbb; }
+.appendix-scroll h3 { font-size: 14px; font-weight: 600; color: #0a0a0a; margin: 24px 0 12px 0; }
+.appendix-scroll h3:first-child { margin-top: 0; }
+.appendix-scroll table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+.appendix-scroll th { text-align: left; padding: 8px 10px; background: #fafafa; color: #999; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e5e5; white-space: nowrap; }
+.appendix-scroll td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; color: #555; line-height: 1.6; vertical-align: top; }
+.appendix-scroll tr:last-child td { border-bottom: none; }
+/* 频次总览表 */
+.appendix-scroll table.freq-table td:first-child { white-space: nowrap; }
+.appendix-scroll table.freq-table td:nth-child(2) { white-space: nowrap; }
+/* 映射表统一列宽 */
+.appendix-scroll table.map-table col.col-name { width: 200px; }
+.appendix-scroll table.map-table col.col-map { width: 220px; }
+.appendix-scroll table.map-table td:first-child { white-space: nowrap; }
+.appendix-scroll table.map-table td:nth-child(2) { white-space: nowrap; }
+.appendix-scroll .freq-bar { display: inline-block; height: 6px; border-radius: 3px; background: #3b82f6; margin-right: 6px; vertical-align: middle; }
+.appendix-scroll .not-mapped { color: #bbb; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>通用设计原则 — 沟通过程回顾</h1>
+<p style="font-size: 12px; color: #999; margin-top: -40px; margin-bottom: 48px;">产出时间：2026/05/15 &nbsp;|&nbsp; 设计师：田琳 &nbsp;|&nbsp; AI 工具：WorkBuddy</p>
+
+<!-- 16 条原则卡片 -->
+<div class="principles-section">
+<h2>16 条通用设计原则</h2>
+<div class="principles-grid">
+<div class="principle-card" onclick="openModal('u001')"><span class="card-priority p2">P2</span><div class="card-id">U-001</div><div class="card-name">费茨定律</div></div>
+<div class="principle-card" onclick="openModal('u002')"><span class="card-priority p2">P2</span><div class="card-id">U-002</div><div class="card-name">格式塔原则</div></div>
+<div class="principle-card" onclick="openModal('u003')"><span class="card-priority p2">P2</span><div class="card-id">U-003</div><div class="card-name">席克定律</div></div>
+<div class="principle-card" onclick="openModal('u004')"><span class="card-priority p2">P2</span><div class="card-id">U-004</div><div class="card-name">峰终定律</div></div>
+<div class="principle-card" onclick="openModal('u005')"><span class="card-priority p2">P2</span><div class="card-id">U-005</div><div class="card-name">米勒定律</div></div>
+<div class="principle-card" onclick="openModal('u006')"><span class="card-priority p0">P0</span><div class="card-id">U-006</div><div class="card-name">反馈即时性</div></div>
+<div class="principle-card" onclick="openModal('u007')"><span class="card-priority p0">P0</span><div class="card-id">U-007</div><div class="card-name">安全确认与容错</div></div>
+<div class="principle-card" onclick="openModal('u008')"><span class="card-priority p2">P2</span><div class="card-id">U-008</div><div class="card-name">一致性</div></div>
+<div class="principle-card" onclick="openModal('u009')"><span class="card-priority p1">P1</span><div class="card-id">U-009</div><div class="card-name">识别而非回忆</div></div>
+<div class="principle-card" onclick="openModal('u010')"><span class="card-priority p1">P1</span><div class="card-id">U-010</div><div class="card-name">自然语言表达</div></div>
+<div class="principle-card" onclick="openModal('u011')"><span class="card-priority p0">P0</span><div class="card-id">U-011</div><div class="card-name">无障碍可达</div></div>
+<div class="principle-card" onclick="openModal('u012')"><span class="card-priority p2">P2</span><div class="card-id">U-012</div><div class="card-name">渐进式披露</div></div>
+<div class="principle-card" onclick="openModal('u013')"><span class="card-priority p1">P1</span><div class="card-id">U-013</div><div class="card-name">信噪比</div></div>
+<div class="principle-card" onclick="openModal('u014')"><span class="card-priority p1">P1</span><div class="card-id">U-014</div><div class="card-name">关键信息前置</div></div>
+<div class="principle-card" onclick="openModal('u015')"><span class="card-priority p0">P0</span><div class="card-id">U-015</div><div class="card-name">用户控制与自由</div></div>
+<div class="principle-card" onclick="openModal('u016')"><span class="card-priority p1">P1</span><div class="card-id">U-016</div><div class="card-name">透明与信任</div></div>
+</div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<div class="modal-content" onclick="event.stopPropagation()">
+<div class="modal-inner">
+<button class="modal-close" onclick="closeModal()">×</button>
+<div id="modalBody"></div>
+</div>
+</div>
+</div>
+
+<h2 class="section-title">原则沟通过程</h2>
+
+<div class="timeline">
+
+<!-- Phase 1 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 1：确立架构定位</div>
+<div class="phase-collab">🧑 人提出三层架构构想 → 🤖 AI 追问原则层定位（是 Skill 还是 Reference？）→ 共同敲定"判断型 Reference"定位</div>
+<div class="phase-content">
+<p>明确了 Harness 三层架构中<strong>原则层</strong>的定位：它是 Reference（判断型），不是 Skill（执行型）。回答的问题是"怎样才算好"，而不是"怎么做"。</p>
+<div class="decision"><strong>关键决策：</strong>原则层通过 Pre-hook 自动注入 design 类 Skill，设计师无感知。业务原则可继承+覆写通用原则，但必须显式声明。</div>
+<p>确定了原则卡片的 7 字段结构：编号、一句话、判定条件、适用场景、与谁冲突、冲突时默认立场、正例/反例。</p>
+<div class="decision"><strong>核心共识：</strong>判定条件是最核心的字段——没有它原则就是空话。一条原则如果不能转化为 AI 可判定的条件，就不该入库。</div>
+</div>
+</div>
+
+<!-- Phase 2 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 2：产出初始 10 条原则</div>
+<div class="phase-collab">🤖 AI 基于交互设计理论草拟 10 条 → 🧑 人逐条 review 判定条件的可执行性 → 🤖 AI 补充数值化阈值</div>
+<div class="phase-content">
+<p>从经典交互设计理论出发，产出第一批 10 条通用原则（U-001 ~ U-010）：</p>
+<p>
+<span class="tag tag-principle">U-001 费茨定律</span>
+<span class="tag tag-principle">U-002 格式塔原则</span>
+<span class="tag tag-principle">U-003 席克定律</span>
+<span class="tag tag-principle">U-004 峰终定律</span>
+<span class="tag tag-principle">U-005 米勒定律</span>
+<span class="tag tag-principle">U-006 反馈即时性</span>
+<span class="tag tag-principle">U-007 安全确认与容错</span>
+<span class="tag tag-principle">U-008 一致性</span>
+<span class="tag tag-principle">U-009 识别而非回忆</span>
+<span class="tag tag-principle">U-010 自然语言表达</span>
+</p>
+<p>每条原则都配备了数值型/逻辑型的判定条件（如"44px 触控目标""200ms 反馈"），确保 AI 可判定。</p>
+</div>
+</div>
+
+<!-- Phase 3-1 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 3-1：对比小红书 52 条设计原则</div>
+<div class="phase-collab">🧑 人提供小红书 52 条设计原则 → 🤖 AI 逐条映射与现有原则的覆盖关系 → 发现 3 条新增点 → 🧑 人确认补充</div>
+<div class="phase-content">
+<p>人提供了小红书社区总结的 52 条设计原则，让 AI 排查是否有遗漏。AI 逐条映射后发现：</p>
+<p><strong>已覆盖：</strong>大部分被现有原则吸收（如"减少用户记忆负担"→ U-009、"操作反馈及时"→ U-006）</p>
+<p><strong>新增 3 条：</strong></p>
+<p>
+<span class="tag tag-principle">U-012 渐进式披露</span>
+<span class="tag tag-principle">U-013 信噪比</span>
+<span class="tag tag-principle">U-014 关键信息前置</span>
+</p>
+<div class="decision"><strong>新增依据：</strong>小红书的 52 条偏向"信息管理"维度（如何组织、过滤、排列信息），恰好补了初始 10 条在这个维度的空白。渐进式披露、信噪比、关键信息前置三者构成了"信息如何被呈现"的完整链路。</div>
+</div>
+</div>
+
+<!-- Phase 3-2 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 3-2：对比评审输出调研中的评审维度</div>
+<div class="phase-collab">🧑 人从评审输出调研中提取了 6 大评审维度 → 🤖 AI 逐维度对照 → 确认"信任与安全"维度需强化</div>
+<div class="phase-content">
+<p>人从调研的设计评审工具（Figma Make、Exdera、Spec AI 等）中提取了通用评审维度框架：</p>
+<p>
+<span class="tag tag-method">视觉层级与信息架构</span>
+<span class="tag tag-method">色彩与品牌</span>
+<span class="tag tag-method">文案与微交互</span>
+<span class="tag tag-method">信任与安全</span>
+<span class="tag tag-method">交互与状态</span>
+<span class="tag tag-method">情感化设计</span>
+</p>
+<div class="insight"><strong>关键缺口：</strong>"信任与安全"维度中，"安全"有 U-007 覆盖，但"信任"（透明度、可追溯性、资金状态可见性）没有独立原则承载。</div>
+<p><strong>新增 1 条：</strong></p>
+<p><span class="tag tag-principle">U-016 透明与信任</span></p>
+<div class="decision"><strong>新增依据：</strong>用户必须能随时知晓资金状态和流程进展，关键计算过程必须可见。评审维度映射验证了这一缺口的普遍性。</div>
+</div>
+</div>
+
+<!-- Phase 3-3 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 3-3：对比国内外经典设计原则</div>
+<div class="phase-collab">🧑 人要求对照经典原则体系进行补充 → 🤖 AI 梳理 Nielsen/Shneiderman/Norman/Rams/Material → 发现"用户控制与自由"需独立</div>
+<div class="phase-content">
+<p>AI 系统对比了以下经典体系：</p>
+<p>
+<span class="tag tag-method">Nielsen 十大可用性原则</span>
+<span class="tag tag-method">Shneiderman 八项黄金法则</span>
+<span class="tag tag-method">Norman 设计心理学</span>
+<span class="tag tag-method">Dieter Rams 十项原则</span>
+<span class="tag tag-method">Google Material Design</span>
+</p>
+<p><strong>映射结果：</strong></p>
+<ul style="font-size:13px; color:#555; padding-left:18px; margin-top:8px; margin-bottom:20px;">
+<li>Nielsen "用户控制与自由" → 现有原则无独立覆盖 → 新增 U-015</li>
+<li>Nielsen "灵活与效率" → 支付场景中是安全隐患，不入库</li>
+<li>Shneiderman "允许撤销" → 并入 U-015</li>
+<li>Rams "尽可能少的设计" → 已被 U-013 覆盖</li>
+<li>Material "大胆、图形化、有意义" → 太偏视觉风格，不入库</li>
+</ul>
+<p><strong>新增 1 条：</strong></p>
+<p><span class="tag tag-principle">U-015 用户控制与自由</span></p>
+<div class="decision"><strong>新增依据：</strong>用户必须能随时退出、撤销、不被困在流程中。Nielsen 和 Shneiderman 都独立列出，金融产品中尤其重要（误操作的后果是真金白银）。</div>
+</div>
+</div>
+
+<!-- Phase 4-1 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 4-1：四维审查 → 汇总扩展至 16 条</div>
+<div class="phase-collab">🧑 人问"还有什么方法能提升权威性与严谨性" → 🤖 AI 提出四维审查框架 → 🧑 人敏锐发现"信任维度缺口"并说"要不加上去吧"</div>
+<div class="phase-content">
+<p>提出四维审查框架，对原则进行权威性与严谨性审计：</p>
+<p>
+<span class="tag tag-method">D1 数量合理性</span>
+<span class="tag tag-method">D2 业务适配性</span>
+<span class="tag tag-method">D3 覆盖齐全度</span>
+<span class="tag tag-method">D4 同事接受度</span>
+</p>
+<div class="insight"><strong>D3 发现缺口：</strong>用交互生命周期映射（感知→理解→决策→操作→反馈→纠错→信任）验证覆盖度，确认 16 条原则已完整覆盖所有阶段。</div>
+<p><strong>新增 6 条：</strong></p>
+<p>
+<span class="tag tag-principle">U-011 无障碍可达</span>
+<span class="tag tag-principle">U-012 渐进式披露</span>
+<span class="tag tag-principle">U-013 信噪比</span>
+<span class="tag tag-principle">U-014 关键信息前置</span>
+<span class="tag tag-principle">U-015 用户控制与自由</span>
+<span class="tag tag-principle">U-016 透明与信任</span>
+</p>
+<div class="decision"><strong>汇总依据：</strong>通过四维审查验证，16 条原则覆盖了交互生命周期全部 7 个阶段。"信任"是最后一环，也是金融产品最核心的情感锚点。U-016 定位 P2。</div>
+</div>
+</div>
+
+<!-- Phase 4-2 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 4-2：行业对标验证</div>
+<div class="phase-collab">🧑 人问"行业对标可以帮我做吗？" → 🤖 AI 研究 Stripe/Wise/支付宝/Ant Design/TDesign 五家体系 → 意外发现 U-016 是全行业最强共识</div>
+<div class="phase-content">
+<p>对标 Stripe、Wise、支付宝、Ant Design、TDesign 五家金融科技/设计体系，验证 16 条原则的行业共识度。</p>
+<div class="decision"><strong>关键发现：</strong>
+<ul style="margin-top:8px; padding-left:16px;">
+<li>U-016 透明与信任是行业最强共识（Stripe + Wise 都列为首要原则）</li>
+<li>U-007/U-010 是 Stripe 错误处理的底层逻辑</li>
+<li>学术原则（费茨/席克/米勒）在行业中隐性嵌入</li>
+<li>U-004 峰终定律和 U-014 关键信息前置行业对标较弱（属于策略层）</li>
+<li>TDesign 的"包容"比 U-011 更宽（对应 Harness 的继承覆写机制）</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- Phase 5 -->
+<div class="phase">
+<div class="phase-dot"></div>
+<div class="phase-title">Phase 5：冲突矩阵 + 取舍准则</div>
+<div class="phase-collab">🤖 AI 提出"冲突声明是灵魂"理念 → 🤖 AI 自动构建 16×16 矩阵 → 🧑 人验收并确认取舍优先级排序</div>
+<div class="phase-content">
+<p>构建 16×16 冲突矩阵，标注所有原则间的冲突关系（● 冲突 / ○ 偶尔冲突），确保评审时有预声明的取舍路径。</p>
+<p><strong>取舍优先级（P0→P11）：</strong></p>
+<ul>
+<li>P0 安全确认与容错 / 无障碍可达（不可妥协底线）</li>
+<li>P1 用户控制与自由 / 反馈即时性</li>
+<li>P2 自然语言表达 / 透明与信任</li>
+<li>...一直到 P11 一致性（服务于体验，不高于体验）</li>
+</ul>
+<div class="decision"><strong>核心理念：</strong>冲突声明是原则库的灵魂——不冲突的原则可能不需要入库。没有冲突声明的原则库是"看起来都对"的废话集合。</div>
+</div>
+</div>
+
+</div><!-- end timeline -->
+
+<div class="summary-box">
+<h2>最终产出物</h2>
+<ul>
+<li><code>universal-principles.md</code> — 16 条原则卡片 + 冲突矩阵 + 取舍准则 + 行业对标</li>
+<li><code>design-principles-review</code> — 通用设计原则评审 Skill（自动化评审引擎）</li>
+</ul>
+</div>
+
+<!-- 附录：映射关系 -->
+<div class="appendix">
+<h2>附录：经典设计原则映射关系</h2>
+<div class="appendix-scroll">
+
+<h3>引用频次总览</h3>
+<table class="freq-table">
+<tr><th>通用原则</th><th>频次</th><th>主要来源</th></tr>
+<tr><td>U-008 一致性</td><td><span class="freq-bar" style="width:104px"></span>13</td><td>Nielsen、Norman、Shneiderman、Rams、Laws of UX、Apple、Material、Fluent、Carbon、Ant、微信、TDesign、ISO 9241</td></tr>
+<tr><td>U-006 反馈即时性</td><td><span class="freq-bar" style="width:72px"></span>9</td><td>Nielsen、Norman、Shneiderman、Laws of UX、Material、Carbon、Ant、ISO 9241、微信</td></tr>
+<tr><td>U-010 自然语言表达</td><td><span class="freq-bar" style="width:80px"></span>10</td><td>Nielsen、Norman、Rams、Laws of UX、Material、Fluent、Apple、Ant、ISO 9241、WCAG</td></tr>
+<tr><td>U-007 安全确认与容错</td><td><span class="freq-bar" style="width:64px"></span>8</td><td>Nielsen×2、Norman×2、Shneiderman、Laws of UX、微信、ISO 9241</td></tr>
+<tr><td>U-009 识别而非回忆</td><td><span class="freq-bar" style="width:72px"></span>9</td><td>Nielsen、Norman、Shneiderman、Laws of UX×2、Ant、微信、ISO 9241×2</td></tr>
+<tr><td>U-013 信噪比</td><td><span class="freq-bar" style="width:56px"></span>7</td><td>Nielsen、Rams×2、Fluent、Carbon、Ant、微信</td></tr>
+<tr><td>U-011 无障碍可达</td><td><span class="freq-bar" style="width:48px"></span>6</td><td>Apple、Fluent、Carbon、TDesign、WCAG、ISO 9241</td></tr>
+<tr><td>U-015 用户控制与自由</td><td><span class="freq-bar" style="width:48px"></span>6</td><td>Nielsen、Shneiderman×2、Material、ISO 9241、Laws of UX</td></tr>
+<tr><td>U-002 格式塔原则</td><td><span class="freq-bar" style="width:40px"></span>5</td><td>Laws of UX、Apple、Material、Ant×2</td></tr>
+<tr><td>U-014 关键信息前置</td><td><span class="freq-bar" style="width:32px"></span>4</td><td>Laws of UX、Apple、Ant、微信</td></tr>
+<tr><td>U-004 峰终定律</td><td><span class="freq-bar" style="width:32px"></span>4</td><td>Shneiderman、Laws of UX、Carbon、Ant</td></tr>
+<tr><td>U-012 渐进式披露</td><td><span class="freq-bar" style="width:32px"></span>4</td><td>Norman、Laws of UX、Ant、ISO 9241</td></tr>
+<tr><td>U-003 席克定律</td><td><span class="freq-bar" style="width:32px"></span>4</td><td>Laws of UX、Ant、微信、ISO 9241</td></tr>
+<tr><td>U-001 费茨定律</td><td><span class="freq-bar" style="width:24px"></span>3</td><td>Laws of UX、WCAG、微信</td></tr>
+<tr><td>U-005 米勒定律</td><td><span class="freq-bar" style="width:16px"></span>2</td><td>Shneiderman、Laws of UX</td></tr>
+<tr><td>U-016 透明与信任</td><td><span class="freq-bar" style="width:8px"></span>1</td><td>Rams（"诚实的"）</td></tr>
+</table>
+
+<h3>Nielsen 十大可用性启发式</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>系统状态可见性</td><td>U-006</td><td>操作后即时反馈 = 状态可见</td></tr>
+<tr><td>系统与真实世界匹配</td><td>U-010</td><td>直接对应</td></tr>
+<tr><td>用户控制与自由</td><td>U-015</td><td>直接对应</td></tr>
+<tr><td>一致性与标准</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>错误预防</td><td>U-007</td><td>二次确认 = 预防</td></tr>
+<tr><td>识别而非回忆</td><td>U-009</td><td>直接对应</td></tr>
+<tr><td>灵活与效率</td><td class="not-mapped">不入库</td><td>支付场景安全隐患</td></tr>
+<tr><td>美学与极简设计</td><td>U-013</td><td>"美学"不可判定，拆为信噪比</td></tr>
+<tr><td>帮助识别/诊断错误</td><td>U-007</td><td>容错恢复路径已覆盖</td></tr>
+<tr><td>帮助与文档</td><td class="not-mapped">不入库</td><td>不属于界面设计层面</td></tr>
+</table>
+
+<h3>Shneiderman 八项黄金法则</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>追求一致性</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>允许快捷方式</td><td class="not-mapped">不入库</td><td>支付场景安全隐患</td></tr>
+<tr><td>提供信息反馈</td><td>U-006</td><td>直接对应</td></tr>
+<tr><td>设计闭合性对话</td><td>U-004</td><td>流程结束正向反馈</td></tr>
+<tr><td>预防错误</td><td>U-007</td><td>直接对应</td></tr>
+<tr><td>允许撤销</td><td>U-015</td><td>撤销是用户控制的子集</td></tr>
+<tr><td>支持内部控制点</td><td>U-015</td><td>用户主导</td></tr>
+<tr><td>减少短期记忆负荷</td><td>U-005 + U-009</td><td>两条协同覆盖</td></tr>
+</table>
+
+<h3>Norman 设计心理学七原则</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>利用世界与头脑中的知识</td><td>U-009</td><td>可选项可见</td></tr>
+<tr><td>简化任务结构</td><td>U-012</td><td>分步/分层 = 简化</td></tr>
+<tr><td>可视性</td><td>U-006</td><td>桥接执行与评估鸿沟</td></tr>
+<tr><td>正确映射</td><td>U-010</td><td>交互映射真实世界</td></tr>
+<tr><td>利用约束力</td><td>U-007</td><td>约束 = 限制错误操作</td></tr>
+<tr><td>为错误设计</td><td>U-007</td><td>预防 + 恢复</td></tr>
+<tr><td>标准化</td><td>U-008</td><td>直接对应</td></tr>
+</table>
+
+<h3>Dieter Rams 十项原则</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>创新的</td><td class="not-mapped">不入库</td><td>太抽象</td></tr>
+<tr><td>有用的</td><td>全局覆盖</td><td>总纲</td></tr>
+<tr><td>美学的</td><td class="not-mapped">不入库</td><td>主观审美无法判定</td></tr>
+<tr><td>易懂的</td><td>U-010</td><td>易懂 = 用户语言</td></tr>
+<tr><td>谨慎的</td><td>U-013</td><td>谨慎 = 不多余</td></tr>
+<tr><td>诚实的</td><td>U-016</td><td>诚实 = 透明</td></tr>
+<tr><td>持久的</td><td class="not-mapped">不入库</td><td>偏工业设计</td></tr>
+<tr><td>注重细节</td><td>全局覆盖</td><td>判定条件本身就是细节</td></tr>
+<tr><td>环保的</td><td class="not-mapped">不入库</td><td>不适用界面设计</td></tr>
+<tr><td>尽可能少的设计</td><td>U-013</td><td>Less is more</td></tr>
+</table>
+
+<h3>Laws of UX</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>Fitts's Law</td><td>U-001</td><td>直接对应</td></tr>
+<tr><td>Hick's Law</td><td>U-003</td><td>直接对应</td></tr>
+<tr><td>Miller's Law</td><td>U-005</td><td>直接对应</td></tr>
+<tr><td>Peak-End Rule</td><td>U-004</td><td>直接对应</td></tr>
+<tr><td>Jakob's Law</td><td>U-008</td><td>用户偏好熟悉模式</td></tr>
+<tr><td>Doherty Threshold</td><td>U-006</td><td>400ms 阈值已写入</td></tr>
+<tr><td>Gestalt Principles</td><td>U-002</td><td>直接对应</td></tr>
+<tr><td>Von Restorff Effect</td><td class="not-mapped">二期候选</td><td>一期不入</td></tr>
+<tr><td>Goal-Gradient Effect</td><td>U-009</td><td>步骤指示器覆盖</td></tr>
+<tr><td>Tesler's Law</td><td>U-012</td><td>复杂性守恒</td></tr>
+<tr><td>Serial Position Effect</td><td>U-014</td><td>首因效应</td></tr>
+<tr><td>Postel's Law</td><td>U-007</td><td>宽容接受，严格输出</td></tr>
+</table>
+
+<h3>Apple Human Interface Guidelines</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>层次感</td><td>U-002 + U-014</td><td>视觉层级</td></tr>
+<tr><td>和谐感</td><td class="not-mapped">不入库</td><td>偏硬件/软件协同</td></tr>
+<tr><td>一致性</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>可访问性</td><td>U-011</td><td>直接对应</td></tr>
+</table>
+
+<h3>Google Material Design</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>材质隐喻</td><td class="not-mapped">不入库</td><td>Material 专属</td></tr>
+<tr><td>表面直觉自然</td><td>U-010</td><td>Affordance</td></tr>
+<tr><td>自适应设计</td><td class="not-mapped">不入库</td><td>技术实现层面</td></tr>
+<tr><td>用户发起变更</td><td>U-015</td><td>用户主导</td></tr>
+<tr><td>动效传达意义</td><td>U-006</td><td>动效是反馈手段</td></tr>
+</table>
+
+<h3>Microsoft Fluent Design</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>平台自然</td><td>U-010 + U-008</td><td>平台惯例</td></tr>
+<tr><td>专注构建</td><td>U-013</td><td>减少杂讯</td></tr>
+<tr><td>包容所有人</td><td>U-011</td><td>包容性</td></tr>
+<tr><td>品牌识别</td><td class="not-mapped">不入库</td><td>品牌属于业务层</td></tr>
+</table>
+
+<h3>IBM Carbon</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>一致性</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>经济高效</td><td>U-013</td><td>最少元素最多含义</td></tr>
+<tr><td>通用</td><td>U-011</td><td>通用 = 可达</td></tr>
+<tr><td>有意义</td><td>U-004</td><td>有意义的体验</td></tr>
+</table>
+
+<h3>Ant Design</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>自然</td><td>U-010</td><td>感知自然</td></tr>
+<tr><td>确定性</td><td>U-008</td><td>行为可预期</td></tr>
+<tr><td>亲密性</td><td>U-002</td><td>接近性</td></tr>
+<tr><td>对齐</td><td>U-002</td><td>连续性</td></tr>
+<tr><td>对比</td><td>U-014</td><td>对比建立层级</td></tr>
+<tr><td>直截了当</td><td>U-009</td><td>直接展示</td></tr>
+<tr><td>即时反应</td><td>U-006</td><td>直接对应</td></tr>
+<tr><td>简化交互</td><td>U-003</td><td>减少步骤</td></tr>
+<tr><td>足不出户</td><td>U-012</td><td>就地操作</td></tr>
+</table>
+
+<h3>微信小程序设计指南</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>友好礼貌</td><td>U-013</td><td>不打扰 = 低噪声</td></tr>
+<tr><td>清晰明确</td><td>U-009 + U-014</td><td>信息清晰可见</td></tr>
+<tr><td>便捷优雅</td><td>U-001 + U-003</td><td>操作便捷</td></tr>
+<tr><td>统一稳定</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>谨慎请求权限</td><td>U-007</td><td>最小权限 = 安全</td></tr>
+<tr><td>减少输入</td><td>U-003</td><td>选择优于输入</td></tr>
+</table>
+
+<h3>TDesign</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>包容</td><td>U-011</td><td>包容 ⊃ 无障碍</td></tr>
+<tr><td>多元</td><td class="not-mapped">不入库</td><td>偏业务场景</td></tr>
+<tr><td>进化</td><td class="not-mapped">不入库</td><td>偏产品策略</td></tr>
+<tr><td>连接</td><td>U-008</td><td>跨产品一致</td></tr>
+</table>
+
+<h3>WCAG 2.1/2.2</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>Perceivable 可感知</td><td>U-011</td><td>色对比度、非色唯一</td></tr>
+<tr><td>Operable 可操作</td><td>U-011 + U-001</td><td>键盘可达 + 触控目标</td></tr>
+<tr><td>Understandable 可理解</td><td>U-010</td><td>用户语言</td></tr>
+<tr><td>Robust 健壮</td><td>U-011</td><td>ARIA 语义</td></tr>
+</table>
+
+<h3>ISO 9241 Part 110</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>适合任务</td><td>U-003 + U-012</td><td>只展示任务所需</td></tr>
+<tr><td>自描述性</td><td>U-006 + U-009</td><td>系统随时告知状态</td></tr>
+<tr><td>可控性</td><td>U-015</td><td>用户可发起/调整/撤销</td></tr>
+<tr><td>符合用户期望</td><td>U-008 + U-010</td><td>行为可预期</td></tr>
+<tr><td>容错性</td><td>U-007</td><td>直接对应</td></tr>
+<tr><td>适合个性化</td><td class="not-mapped">不入库</td><td>金融场景不鼓励自定义</td></tr>
+<tr><td>适合学习</td><td>U-009 + U-010</td><td>低学习成本</td></tr>
+</table>
+
+<h3>小红书 52 条设计原则</h3>
+<table class="map-table">
+<colgroup><col class="col-name"><col class="col-map"><col class="col-reason"></colgroup>
+<tr><th>原则名称</th><th>映射原则</th><th>映射原因</th></tr>
+<tr><td>01 帕累托法则</td><td>U-003</td><td>聚焦核心 20% = 精简决策</td></tr>
+<tr><td>02 多功能代价</td><td>U-003</td><td>功能增多降低可用性</td></tr>
+<tr><td>03 成本-效益原则</td><td>U-013</td><td>效益 > 成本 = 去噪</td></tr>
+<tr><td>04 曝光效应</td><td>U-008</td><td>重复接触产生偏好 = 一致性</td></tr>
+<tr><td>05 形式追随功能</td><td>U-013</td><td>功能优先于装饰</td></tr>
+<tr><td>06 奥卡姆剃刀</td><td>U-013</td><td>如无必要勿增实体</td></tr>
+<tr><td>07 古腾堡图表</td><td>U-014</td><td>视觉扫描路径 → 信息前置</td></tr>
+<tr><td>08 菲茨定律</td><td>U-001</td><td>直接对应</td></tr>
+<tr><td>09 席克定律</td><td>U-003</td><td>直接对应</td></tr>
+<tr><td>10 米勒定律</td><td>U-005</td><td>直接对应</td></tr>
+<tr><td>11 泰斯勒定律</td><td>U-012</td><td>复杂性守恒 → 渐进披露</td></tr>
+<tr><td>12 多尔蒂门槛</td><td>U-006</td><td>400ms 阈值</td></tr>
+<tr><td>13 认知加工层次</td><td>U-009</td><td>深加工更易记 → 识别</td></tr>
+<tr><td>14 垃圾进垃圾出</td><td>U-007</td><td>输入质量 → 错误预防</td></tr>
+<tr><td>15 五架帽理论</td><td>U-014</td><td>信息组织方式</td></tr>
+<tr><td>16 关键信息前置结构</td><td>U-014</td><td>直接对应</td></tr>
+<tr><td>17 干扰效应</td><td>U-008</td><td>规则一致减少干扰</td></tr>
+<tr><td>18 图优效应</td><td>U-010</td><td>图像优于文字</td></tr>
+<tr><td>19 宜家效应</td><td class="not-mapped">不入库</td><td>偏用户参与感</td></tr>
+<tr><td>20 框架效应</td><td>U-010</td><td>表述影响决策</td></tr>
+<tr><td>21 期望效应</td><td>U-008</td><td>符合期望 = 一致</td></tr>
+<tr><td>22 蔡加尼克效应</td><td>U-009</td><td>未完成任务更易记 → 步骤指示器</td></tr>
+<tr><td>23 确认性操作</td><td>U-007</td><td>直接对应安全确认</td></tr>
+<tr><td>24 渐进呈现</td><td>U-012</td><td>直接对应</td></tr>
+<tr><td>25 共同命运原则</td><td>U-002</td><td>格式塔子原则</td></tr>
+<tr><td>26 布拉格南斯定律</td><td>U-002</td><td>格式塔简洁性</td></tr>
+<tr><td>27 映射关系</td><td>U-010</td><td>交互映射真实世界</td></tr>
+<tr><td>28 马斯洛需求层次</td><td class="not-mapped">不入库</td><td>偏需求分析</td></tr>
+<tr><td>29 一致性</td><td>U-008</td><td>直接对应</td></tr>
+<tr><td>30 对比性</td><td>U-014</td><td>对比建立层级</td></tr>
+<tr><td>31 均质连接</td><td>U-002</td><td>格式塔子原则</td></tr>
+<tr><td>32 图底关系</td><td>U-002</td><td>格式塔子原则</td></tr>
+<tr><td>33 邻近性</td><td>U-002</td><td>格式塔接近性</td></tr>
+<tr><td>34 连续性</td><td>U-002</td><td>格式塔连续性</td></tr>
+<tr><td>35 恒常性</td><td>U-008</td><td>视觉恒常 = 一致</td></tr>
+<tr><td>36 对齐</td><td>U-002</td><td>格式塔对齐</td></tr>
+<tr><td>37 模块化</td><td>U-005</td><td>模块分组 → 认知负荷</td></tr>
+<tr><td>38 图层化</td><td>U-012</td><td>分层展示</td></tr>
+<tr><td>39 约束性</td><td>U-007</td><td>限制错误操作</td></tr>
+<tr><td>40 宽容性</td><td>U-007</td><td>容错</td></tr>
+<tr><td>41 趋同性</td><td>U-002</td><td>格式塔相似性</td></tr>
+<tr><td>42 心流</td><td>U-006</td><td>即时反馈维持心流</td></tr>
+<tr><td>43 正态分布</td><td class="not-mapped">不入库</td><td>偏数据分析</td></tr>
+<tr><td>44 期望路线</td><td>U-009</td><td>预期路径可见</td></tr>
+<tr><td>45 反馈环</td><td>U-006</td><td>操作→反馈→调整</td></tr>
+<tr><td>46 留白感知</td><td>U-013</td><td>留白 = 信噪比</td></tr>
+<tr><td>47 功能蔓延</td><td>U-003</td><td>功能膨胀 → 精简</td></tr>
+<tr><td>48 信噪比</td><td>U-013</td><td>直接对应</td></tr>
+<tr><td>49 心智模型</td><td>U-010</td><td>匹配用户心智</td></tr>
+<tr><td>50 委员会设计</td><td class="not-mapped">不入库</td><td>偏组织管理</td></tr>
+<tr><td>51 满意解决模式</td><td>U-003</td><td>用户不追求最优解</td></tr>
+<tr><td>52 非我发明症</td><td class="not-mapped">不入库</td><td>偏团队心理</td></tr>
+</table>
+
+</div>
+</div>
+
+</div>
+
+<script>
+const principles = {
+u001:{title:'U-001 费茨定律',oneliner:'目标越大、距离越近，操作越快。',conditions:['可点击/可触摸元素的尺寸 ≥ 44px × 44px','高频操作入口距拇指热区 ≤ 2 次滑动','主要 CTA 按钮宽度 ≥ 屏幕宽度的 40%','间距 ≤ 8px 的相邻可点击元素视为一个操作区域','核心操作按钮必须位于屏幕底部 1/3 区域','输入框获焦弹出虚拟键盘时页面必须自适应','移动端不得依赖水平滚动展示核心信息'],scope:'所有涉及点击、触摸、拖拽操作的界面元素。',conflicts:['U-003 席克定律：大按钮可能增加视觉权重','U-004 峰终定律：为营造峰值可能需要缩小非核心操作','U-007 安全确认：安全场景可能需要增加操作难度','U-014 关键信息前置：信息在前 vs 操作在底部（○）'],stance:'优先保证可触达性，除非业务原则显式覆写。',example:'充话费按钮 48px 高，位于首屏拇指热区，一键直达。',counter:'付款按钮 28px 高，需要滑动页面才能触及。'},
+u002:{title:'U-002 格式塔原则',oneliner:'元素之间的关系由接近性、相似性、闭合性和连续性决定。',conditions:['接近性：同组间距 ≤ 8px，不同组间距 ≥ 24px','相似性：同功能元素使用相同视觉样式','闭合性：卡片/区域必须有明确视觉边界','连续性：对齐方式在同一行/列内保持一致'],scope:'所有涉及元素分组、布局、对齐的界面。',conflicts:['U-005 米勒定律：分组过多可能增加组块数量（○）'],stance:'优先遵循格式塔分组逻辑，超限时合并或折叠次要分组。',example:'充值金额 3×2 网格，同组间距 8px，不同组 24px。',counter:'充值金额和功能入口混在一起，间距相同。'},
+u003:{title:'U-003 席克定律',oneliner:'选项越少，决策越快；每多一个选项，决策时间对数增长。',conditions:['单屏主操作按钮 ≤ 5 个','单屏决策选项 ≤ 7 个','每个决策点只呈现当前步骤相关选项','下一步操作必须能在 3 秒内识别'],scope:'所有涉及用户选择和决策的界面。',conflicts:['U-001 费茨定律：减少选项使保留选项更大','U-005 米勒定律：方向一致但角度不同','U-009 识别而非回忆：显示所有 vs 隐藏次要（○）'],stance:'优先减少决策选项，但不得隐藏必需信息。',example:'充值页 3 个常用金额 + 1 个自定义入口。',counter:'充值页展示 10 个金额选项，无分组。'},
+u004:{title:'U-004 峰终定律',oneliner:'用户对体验的记忆由最强烈的瞬间和结束时的感受决定。',conditions:['多步流程（≥ 3 步）必须有至少 1 个峰值时刻','最后一步必须以正向状态结束','峰值时刻必须与核心价值相关','不得出现"平"的结束'],scope:'所有多步骤流程。',conflicts:['U-001：为峰值可能调整可触达性','U-006：峰值可能需延迟反馈（○）','U-008：为峰值可以打破一致性'],stance:'峰终体验优先于一致性，但不得牺牲可触达性和即时反馈。',example:'充值成功页用动画确认到账金额。',counter:'充值成功后直接返回首页，无确认。'},
+u005:{title:'U-005 米勒定律（7±2）',oneliner:'工作记忆同时处理的信息不超过 7±2 个组块。',conditions:['单屏信息组块 ≤ 7 个','超 5 个组块时使用视觉分组','超 7 个组块时使用折叠/分页/分步','单个列表项字段 ≤ 5 个'],scope:'所有信息展示页面。',conflicts:['U-002：分组可能增加感知组块数（○）','U-003：方向一致角度不同（●）','U-010：用户习惯可能组块较多（○）'],stance:'组块数不得违反 7±2 上限。',example:'账单页 3 个卡片：应还、交易（折叠）、还款入口。',counter:'账单页平铺 12 个信息项。'},
+u006:{title:'U-006 反馈即时性',oneliner:'用户操作后 200ms 内必须有可感知的反馈，闭环 ≤ 400ms。',conditions:['按钮点击后 ≤ 200ms 状态变化','操作到结果 ≤ 400ms','表单提交后 ≤ 200ms 加载指示','页面切换用骨架屏','> 1s 显示进度','> 3s 提供其他入口','> 400ms 必须中间状态反馈'],scope:'所有用户交互场景。',conflicts:['U-004：峰值可能需延迟（○）','U-007：确认流程阻碍即时完成'],stance:'反馈即时性不可妥协。',example:'点击充值后按钮立即变为加载态。',counter:'点击后无变化，2 秒后弹窗才出现。'},
+u007:{title:'U-007 安全确认与容错',oneliner:'涉及资金或不可逆操作时必须二次确认；出错后必须提供诊断和恢复路径。',conditions:['支付/转账 → 确认弹窗显示金额和收款方','不可逆操作 → 确认弹窗说明后果','确认按钮用行为动词','取消按钮可见易点击','不得暗黑模式','可撤销操作撤销窗口 ≥ 3s','出错后提供诊断 + 恢复建议'],scope:'所有涉及资金、个人信息、不可逆操作的界面。',conflicts:['U-001：确认增加操作路径','U-006：确认阻碍即时完成','U-015：安全场景需限制自由（●）'],stance:'安全优先于效率。',example:'确认弹窗"向张三支付 ¥500"。',counter:'转账直接执行无确认。'},
+u008:{title:'U-008 一致性',oneliner:'相同功能在不同位置表现必须一致，核心交互与行业惯例对齐。',conditions:['同一操作使用相同组件','导航层级一致','术语统一','颜色语义统一','核心交互与主流产品一致','不得发明冲突行业惯例的交互'],scope:'所有页面和组件。',conflicts:['U-004：为峰值可打破一致性','U-013：降噪可能打破一致性（○）','U-014：不同页面布局不同（○）'],stance:'一致性是默认，打破须有明确收益。外部一致性优先。',example:'所有业务"立即购买"按钮相同样式。',counter:'三个业务三种按钮样式。'},
+u009:{title:'U-009 识别而非回忆',oneliner:'所有可选项必须可见或可达，不要求用户记忆。',conditions:['当前选择/状态页面内可见','已填内容提交前可回顾','多步流程已完成步骤可见','不得要求记住上一页信息','≥ 3 步必须步骤指示器','可预知剩余步骤数量'],scope:'所有包含选择、填写、多步骤的界面。',conflicts:['U-003：显示所有可能增加选项数（○）','U-013：步骤指示器增加元素（○）'],stance:'识别优先。',example:'汇款流程顶部步骤条 + 收款人金额可见。',counter:'无步骤指示器，不知道还有几步。'},
+u010:{title:'U-010 系统与自然语言表达',oneliner:'使用用户熟悉的语言；可交互元素必须有视觉暗示。',conditions:['不使用技术术语','金融数值用户视角表述','时间用可感知单位','操作用动词短语','可交互元素有 Affordance','不可交互元素不得有交互暗示'],scope:'所有面向用户的文案和界面元素。',conflicts:['U-005：用户语言可能更长（○）','U-013：Affordance 增加视觉元素（○）'],stance:'可理解性优先于简洁性。',example:'汇款失败提示"收款银行暂时无法处理"。',counter:'显示"ERR_TIMEOUT"。'},
+u011:{title:'U-011 无障碍可达',oneliner:'所有用户都必须能感知、理解、操作界面。',conditions:['色对比度：正文 ≥ 4.5:1，大文本 ≥ 3:1','不依赖颜色作为唯一手段','200% 缩放不丢失内容','键盘可达无陷阱','图标按钮有 aria-label','焦点可见','触控目标 ≥ 44px'],scope:'所有界面和交互，无例外。',conflicts:['U-006：reduced-motion 下动效需禁用（○）'],stance:'无障碍是不可妥协的底线。',example:'错误状态：红色边框 + 图标 + 文案。',counter:'错误仅用红色边框标识。'},
+u012:{title:'U-012 渐进式披露',oneliner:'默认只展示当前任务必需的信息，细节按需展开。',conditions:['首屏仅含必填/必读内容','非必需信息按需获取','信息层级 ≤ 3 层','折叠内容不超展开后 60%','CTA 不得被折叠隐藏'],scope:'信息量超 7±2 组块的所有页面。',conflicts:['U-009：折叠可能导致需回忆（●）','U-003：展开入口增加决策节点（○）','U-016：关键计算不得折叠（○）'],stance:'渐进式披露是手段，识别而非回忆是底线。',example:'账单首屏：应还金额 + 还款按钮，点击展开明细。',counter:'50 条交易全部平铺。'},
+u013:{title:'U-013 信噪比',oneliner:'每个元素都必须承载信息价值，无价值的即为噪声。',conditions:['每个元素必须：传达信息/支持操作/建立层级/品牌识别','无功能装饰视为噪声','背景不得降低前景可读性','文案无同义重复','数据精度匹配决策需求'],scope:'所有页面的视觉设计和文案。',conflicts:['U-004：峰值可能需装饰（○）','U-008：降噪可能打破一致性（○）','U-016：透明信息价值 > 视觉成本（○）'],stance:'降噪优先。装饰须证明价值 > 干扰。',example:'汇款结果页仅"已汇出 ¥500 → 张三"。',counter:'大面积庆祝动效淹没关键信息。'},
+u014:{title:'U-014 关键信息前置',oneliner:'最重要的信息放在最前面，细节按重要性递减。',conditions:['首屏含核心结论/关键数据','顺序：结果→原因→细节→补充','无需滚动获取核心信息','列表按重要性排序','错误/警告在区域顶部'],scope:'所有信息展示页面。',conflicts:['U-002：按重要性可能打乱逻辑分组（○）','U-008：不同页面布局优先级不同（○）'],stance:'信息优先级高于视觉分组。',example:'汇款详情顶部："汇款成功 ¥500 → 张三"。',counter:'顶部展示时间线，需滚动看是否成功。'},
+u015:{title:'U-015 用户控制与自由',oneliner:'用户必须能随时退出、撤销、不被困在流程中。',conditions:['每个流程/弹窗有退出入口，≤ 1 步','非破坏性操作可撤销，≤ 3s 可见','流程任何步骤可返回上一步','多步流程支持保存草稿','不得出现死胡同页面'],scope:'所有流程、弹窗、多步操作。',conflicts:['U-007：安全场景需限制自由（●）','U-003：撤销/返回增加选项（○）','U-013：退出/撤销入口价值极高（○）'],stance:'用户控制优先于界面简洁。',example:'汇款填写页可随时返回修改任一步骤。',counter:'流程只能向前，无法返回修改。'},
+u016:{title:'U-016 透明与信任',oneliner:'用户必须能随时知晓资金状态和流程进展，关键计算过程必须可见。',conditions:['资金操作展示计算过程（汇率/手续费/到账金额）','等待状态说明原因和预期时长','异常时说明资金状态和操作指引','可追溯历史操作完整记录','动态信息标注数据时点','已完成步骤结果持续可见'],scope:'所有涉及资金流动、多步流程、等待状态、动态数据的界面。',conflicts:['U-012：关键计算不得折叠（○）','U-013：透明信息价值 > 视觉成本（○）'],stance:'透明优先于简洁。信息缺失的信任损失远大于信息丰富的认知负担。',example:'汇款确认页"汇出 ¥500→手续费 ¥5→汇率 1:7.80→到账 $63.46"。',counter:'确认页只展示"将汇出 ¥500"。'}
+};
+
+function openModal(id) {
+const p = principles[id];
+if (!p) return;
+document.getElementById('modalBody').innerHTML = `
+<h3>${p.title}</h3>
+<p class="modal-oneliner">${p.oneliner}</p>
+<div class="modal-section"><h4>判定条件</h4><ul>${p.conditions.map(c=>'<li>'+c+'</li>').join('')}</ul></div>
+<div class="modal-section"><h4>适用场景</h4><p>${p.scope}</p></div>
+<div class="modal-section"><h4>与谁冲突</h4><ul>${p.conflicts.map(c=>'<li>'+c+'</li>').join('')}</ul></div>
+<div class="modal-section"><h4>冲突时默认立场</h4><p>${p.stance}</p></div>
+<div class="modal-section"><h4>正例</h4><p style="color:#16a34a;">${p.example}</p></div>
+<div class="modal-section"><h4>反例</h4><p style="color:#dc2626;">${p.counter}</p></div>`;
+document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal(e) {
+if (!e || e.target === document.getElementById('modalOverlay'))
+document.getElementById('modalOverlay').classList.remove('active');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
